@@ -1,0 +1,10 @@
+[out:json][timeout:180];
+area(3600175905)->.nyc;
+(
+  nwr["shop"="bagel"](area.nyc);
+  nwr["shop"="doughnut"](area.nyc);
+  nwr["cuisine"~"bagel|donut|doughnut",i](area.nyc);
+  nwr["name"~"bagel|donut|doughnut|dunkin|krispy kreme",i](area.nyc);
+  nwr["brand"~"dunkin|krispy kreme",i](area.nyc);
+);
+out center tags;

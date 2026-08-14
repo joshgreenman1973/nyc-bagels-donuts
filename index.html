@@ -69,7 +69,7 @@
 </header>
 <div id="map"></div>
 <div class="methodology">
-  Data: OpenStreetMap via Overpass API, pulled 2026-04-22. Includes places tagged <code>shop=bagel</code>, <code>cuisine=bagel</code>, or with "bagel"/"donut"/"doughnut" in the name within NYC's bounding box. OSM coverage is uneven — some shops are missing, a few entries may be outdated. Chain flag catches Dunkin' and Krispy Kreme by name. <a href="https://github.com/joshgreenman1973">Source on GitHub</a>.
+  Data: OpenStreetMap via Overpass API<span id="pulled"></span>. Includes places tagged <code>shop=bagel</code>, <code>shop=doughnut</code>, <code>cuisine=bagel</code>/<code>donut</code>, or with "bagel"/"donut"/"doughnut"/"Dunkin'"/"Krispy Kreme" in the name or brand, clipped to New York City's administrative boundary — so New Jersey and Long Island shops that fall inside a bounding box are excluded. OSM coverage is uneven — some shops are missing, a few entries may be outdated. Chain flag catches Dunkin' and Krispy Kreme by name or brand. Refreshed weekly. <a href="https://github.com/joshgreenman1973/nyc-bagels-donuts">Source on GitHub</a>.
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -157,6 +157,13 @@ fetch('data.min.json').then(r => r.json()).then(data => {
   document.getElementById('c-bagel').textContent = data.bagels.length;
   document.getElementById('c-donut').textContent = indieCount;
   document.getElementById('c-chain').textContent = chainCount;
+  // Date the data from the file itself, so a stalled refresh shows an old
+  // date instead of the footer quietly claiming to be current.
+  if (data.generated) {
+    document.getElementById('pulled').textContent = ', pulled ' +
+      new Date(data.generated + 'T00:00:00Z').toLocaleDateString('en-US',
+        { dateStyle: 'medium', timeZone: 'UTC' });
+  }
   map.addLayer(bagelLayer);
   map.addLayer(donutLayer);
 });
