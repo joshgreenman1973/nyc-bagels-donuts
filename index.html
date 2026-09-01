@@ -118,7 +118,7 @@ const donutIcon = L.divIcon({ className: 'bd-icon', html: DONUT_SVG, iconSize: [
 const chainIcon = L.divIcon({ className: 'bd-icon', html: CHAIN_SVG, iconSize: [26,26], iconAnchor: [13,13], popupAnchor: [0,-12] });
 
 const map = L.map('map', { preferCanvas: false }).setView([40.725, -73.95], 11);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2r82_1_ae4e70b6166057bc41b89638', {
   attribution: '&copy; OpenStreetMap &copy; CARTO',
   maxZoom: 19
 }).addTo(map);
