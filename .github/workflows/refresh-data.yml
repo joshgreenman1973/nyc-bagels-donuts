@@ -11,6 +11,9 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The Overpass retry loop can run for half an hour when every mirror is
+    # busy; this caps it well short of the six-hour runner default.
+    timeout-minutes: 75
     permissions:
       contents: write
 

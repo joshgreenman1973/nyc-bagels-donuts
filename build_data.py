@@ -26,10 +26,23 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "data.min.json")
 QUERY_FILE = os.path.join(HERE, "overpass-query.txt")
 
+# Full-planet mirrors only. Regional instances (overpass.osm.ch, for one)
+# answer this query with zero elements rather than an error, which looks like
+# a successful empty rebuild until the guards below catch it.
 ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
 ]
+
+# The query scans every named feature in the five boroughs and takes about 80
+# seconds against a healthy server, so a busy Overpass returns 504 rather than
+# waiting. Cycle the mirrors in rounds instead of exhausting one at a time: the
+# thing being waited out is a load spike on somebody's volunteer server, and
+# the next round often lands on a different one that has caught up. Weekly job,
+# no deadline -- patience is cheaper than a missed refresh.
+ROUNDS = 4
+ROUND_BACKOFF = [30, 90, 240]   # seconds between rounds
 
 # NYC's OSM relation (3600175905 = relation 175905, the five boroughs).
 # Brand and the bare "Dunkin'" name both matter: the chain dropped "Donuts"
@@ -56,8 +69,8 @@ MIN_RETAINED_SHARE = 0.70   # OSM churns more than a government feed
 
 def fetch(query):
     last = None
-    for endpoint in ENDPOINTS:
-        for attempt in range(3):
+    for rnd in range(ROUNDS):
+        for endpoint in ENDPOINTS:
             try:
                 req = urllib.request.Request(
                     endpoint,
@@ -71,11 +84,16 @@ def fetch(query):
                 return payload
             except Exception as e:                  # noqa: BLE001 - retry anything
                 last = e
-                wait = 10 * (attempt + 1)
-                print(f"  {endpoint} attempt {attempt + 1} failed ({e}); "
-                      f"retrying in {wait}s", file=sys.stderr)
-                time.sleep(wait)
-    raise RuntimeError(f"Overpass unavailable: {last}")
+                print(f"  round {rnd + 1}: {endpoint} failed ({e})",
+                      file=sys.stderr)
+        if rnd < ROUNDS - 1:
+            wait = ROUND_BACKOFF[min(rnd, len(ROUND_BACKOFF) - 1)]
+            print(f"  all {len(ENDPOINTS)} mirrors failed; waiting {wait}s "
+                  f"before round {rnd + 2}", file=sys.stderr)
+            time.sleep(wait)
+    raise RuntimeError(
+        f"Overpass unavailable after {ROUNDS} rounds across "
+        f"{len(ENDPOINTS)} mirrors: {last}")
 
 
 def coords(el):
